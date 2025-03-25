@@ -82,9 +82,4 @@ int sauvegarderMediaSQL(Media media);
  */
 int chargerMediasSQL();
 
-/**
- * Afficher l'interface graphique pour consulter un média
- */
-void afficherInterfaceConsultation();
-
 #endif

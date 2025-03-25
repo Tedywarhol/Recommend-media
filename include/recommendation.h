@@ -67,10 +67,4 @@ int sauvegarderRecommandationsSQL(int idUtilisateur, Recommandation recommandati
  */
 int chargerRecommandationsSQL(int idUtilisateur, Recommandation recommandations[MAX_RECOMMANDATIONS]);
 
-/**
- * Afficher l'interface graphique des recommandations
- * @param idUtilisateur L'identifiant de l'utilisateur
- */
-void afficherInterfaceRecommandations(int idUtilisateur);
-
 #endif

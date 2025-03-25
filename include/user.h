@@ -71,14 +71,4 @@ int sauvegarderUtilisateurSQL(Utilisateur utilisateur);
  */
 int chargerUtilisateursSQL();
 
-/**
- * Afficher la fenêtre d'inscription (Interface graphique)
- */
-void afficherFenetreInscription();
-
-/**
- * Afficher la fenêtre de connexion (Interface graphique)
- */
-void afficherFenetreConnexion();
-
 #endif
