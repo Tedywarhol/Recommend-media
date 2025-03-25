@@ -1,4 +1,4 @@
-#include "media.h"
+#include "../include/media.h"
 #include<stdio.h>
 #include<stdlib.h>
 
