@@ -57,119 +57,38 @@ int saisirChoix(int min, int max)
 
 void choisirPreference(Utilisateur *user)
 {
-
     printf("Sélectionnez votre préférence principale :\n");
-    printf("1 - Musique\n");
-    printf("2 - Jeux vidéo\n");
-    printf("3 - Lecture\n");
-    printf("4 - Films et séries\n");
-    printf("5 - Sport\n");
-    printf("6 - Technologie\n");
+    printf("1 - Musique\n2 - Jeux vidéo\n3 - Lecture\n4 - Films et séries\n5 - Sport\n6 - Technologie\n");
     int choix = saisirChoix(1, 6);
 
-    switch (choix)
+    if (choix == 1)
     {
-    case 1: // Musique
         printf("Sélectionnez votre genre préféré de musique :\n");
-        printf("1 - Pop\n");
-        printf("2 - RnB\n");
-        printf("3 - Rap\n");
-        printf("4 - Kpop\n");
-        printf("5 - Autre\n");
-        {
-            int musiqueChoix = saisirChoix(1, 5);
-            switch (musiqueChoix)
-            {
-            case 1:
-                strcpy(user->preference, "Musique - Pop");
-                break;
-            case 2:
-                strcpy(user->preference, "Musique - RnB");
-                break;
-            case 3:
-                strcpy(user->preference, "Musique - Rap");
-                break;
-            case 4:
-                strcpy(user->preference, "Musique - Kpop");
-                break;
-            default:
-                strcpy(user->preference, "Musique - Autre");
-                break;
-            }
-        }
-        break;
-
-    case 2: // Jeux vidéo
-        strcpy(user->preference, "Jeux vidéo");
-        break;
-
-    case 3: // Lecture
+        printf("1 - Pop\n2 - RnB\n3 - Rap\n4 - Kpop\n5 - Autre\n");
+        int musiqueChoix = saisirChoix(1, 5);
+        const char *genresMusique[] = {"Musique - Pop", "Musique - RnB", "Musique - Rap", "Musique - Kpop", "Musique - Autre"};
+        strcpy(user->preference, genresMusique[musiqueChoix - 1]);
+    }
+    else if (choix == 3)
+    {
         printf("Sélectionnez votre genre préféré de lecture :\n");
-        printf("1 - Horreur\n");
-        printf("2 - Fiction\n");
-        printf("3 - Émotifs\n");
-        printf("4 - Autre\n");
-        {
-            int lectureChoix = saisirChoix(1, 4);
-            switch (lectureChoix)
-            {
-            case 1:
-                strcpy(user->preference, "Lecture - Horreur");
-                break;
-            case 2:
-                strcpy(user->preference, "Lecture - Fiction");
-                break;
-            case 3:
-                strcpy(user->preference, "Lecture - Émotifs");
-                break;
-            default:
-                strcpy(user->preference, "Lecture - Autre");
-                break;
-            }
-        }
-        break;
-
-    case 4: // Films et séries
+        printf("1 - Horreur\n2 - Fiction\n3 - Émotifs\n4 - Autre\n");
+        int lectureChoix = saisirChoix(1, 4);
+        const char *genresLecture[] = {"Lecture - Horreur", "Lecture - Fiction", "Lecture - Émotifs", "Lecture - Autre"};
+        strcpy(user->preference, genresLecture[lectureChoix - 1]);
+    }
+    else if (choix == 4)
+    {
         printf("Sélectionnez votre genre préféré de films et séries :\n");
-        printf("1 - Horreur\n");
-        printf("2 - Comédie\n");
-        printf("3 - Science-fiction\n");
-        printf("4 - Documentaire\n");
-        printf("5 - Autre\n");
-        {
-            int filmsChoix = saisirChoix(1, 5);
-            switch (filmsChoix)
-            {
-            case 1:
-                strcpy(user->preference, "Films et séries - Horreur");
-                break;
-            case 2:
-                strcpy(user->preference, "Films et séries - Comédie");
-                break;
-            case 3:
-                strcpy(user->preference, "Films et séries - Science-fiction");
-                break;
-            case 4:
-                strcpy(user->preference, "Films et séries - Documentaire");
-                break;
-            default:
-                strcpy(user->preference, "Films et séries - Autre");
-                break;
-            }
-        }
-        break;
-
-    case 5: // Sport
-        strcpy(user->preference, "Sport");
-        break;
-
-    case 6: // Technologie
-        strcpy(user->preference, "Technologie");
-        break;
-
-    default:
-        strcpy(user->preference, "Autre");
-        break;
+        printf("1 - Horreur\n2 - Comédie\n3 - Science-fiction\n4 - Documentaire\n5 - Autre\n");
+        int filmsChoix = saisirChoix(1, 5);
+        const char *genresFilms[] = {"Films et séries - Horreur", "Films et séries - Comédie", "Films et séries - Science-fiction", "Films et séries - Documentaire", "Films et séries - Autre"};
+        strcpy(user->preference, genresFilms[filmsChoix - 1]);
+    }
+    else
+    {
+        const char *categories[] = {"Musique", "Jeux vidéo", "Lecture", "Films et séries", "Sport", "Technologie", "Autre"};
+        strcpy(user->preference, categories[choix - 1]);
     }
 }
 
@@ -288,22 +207,23 @@ int creerUtilisateur()
 
 void chiffrerMotDePasse(char *motDePasse)
 {
-    // Remplacement par un hachage SHA256 si besoin
-    for (int i = 0; i < strlen(motDePasse); i++)
+    size_t len = strlen(motDePasse);
+    for (size_t i = 0; i < len && i < MAX_PASSWORD - 5; i++)
     {
-        motDePasse[i] = motDePasse[i] + 1; // Exemple simple d'encodage
+        motDePasse[i] = motDePasse[i] + 1;
     }
-    strcat(motDePasse, "HASH");
+    strncat(motDePasse, "HASH", MAX_PASSWORD - len - 1);
 }
 
-/* Vérifie si le mot de passe respecte les critères */
 int verifierForceMotDePasse(const char *motDePasse)
 {
-    int len = strlen(motDePasse);
+    if (!motDePasse) return 0;
+    
+    size_t len = strlen(motDePasse);
     if (len < 8)
         return 0;
     int maj = 0, chiffre = 0, special = 0;
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         if (isupper(motDePasse[i]))
             maj = 1;
