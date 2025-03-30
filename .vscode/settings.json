@@ -1,3 +1,10 @@
 {
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "sdl.h": "c",
+        "sdl_assert.h": "c",
+        "sdl_stdinc.h": "c",
+        "stdint.h": "c",
+        "stdarg.h": "c"
+    }
 }

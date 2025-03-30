@@ -9,12 +9,12 @@ int ajouterMedia(Media media)
 
 Media *classerMedias(const char *critere)
 {
-    return ;
+    return 0;
 }
 
 Media *rechercherMedia(const char *nomOuGenre)
 {
-    return;
+    return 0;
 }
 
 void afficherMedia(Media media)
