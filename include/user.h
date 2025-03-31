@@ -126,7 +126,7 @@ int supprimerUtilisateur(int id);
  * @param utilisateur L'utilisateur à sauvegarder
  * @return 1 si la sauvegarde a réussi, 0 sinon
  */
-int sauvegarderUtilisateurSQL(Utilisateur utilisateur);
+int sauvegarderUtilisateurSQL(Utilisateur *utilisateur);
 
 /**
  * Charge tous les utilisateurs depuis une base de données SQLite.

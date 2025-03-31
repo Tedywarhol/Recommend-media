@@ -1,4 +1,5 @@
 #include "../include/user.h"
+#include "../include/sqlite3.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +56,7 @@ int saisirChoix(int min, int max)
     }
 }
 
-void choisirPreference(Utilisateur *user)
+void choisirPreference(Utilisateur *utilisateur)
 {
     printf("Sélectionnez votre préférence principale :\n");
     printf("1 - Musique\n2 - Jeux vidéo\n3 - Lecture\n4 - Films et séries\n5 - Sport\n6 - Technologie\n");
@@ -67,7 +68,7 @@ void choisirPreference(Utilisateur *user)
         printf("1 - Pop\n2 - RnB\n3 - Rap\n4 - Kpop\n5 - Autre\n");
         int musiqueChoix = saisirChoix(1, 5);
         const char *genresMusique[] = {"Musique - Pop", "Musique - RnB", "Musique - Rap", "Musique - Kpop", "Musique - Autre"};
-        strcpy(user->preference, genresMusique[musiqueChoix - 1]);
+        strcpy(utilisateur->preference, genresMusique[musiqueChoix - 1]);
     }
     else if (choix == 3)
     {
@@ -75,7 +76,7 @@ void choisirPreference(Utilisateur *user)
         printf("1 - Horreur\n2 - Fiction\n3 - Émotifs\n4 - Autre\n");
         int lectureChoix = saisirChoix(1, 4);
         const char *genresLecture[] = {"Lecture - Horreur", "Lecture - Fiction", "Lecture - Émotifs", "Lecture - Autre"};
-        strcpy(user->preference, genresLecture[lectureChoix - 1]);
+        strcpy(utilisateur->preference, genresLecture[lectureChoix - 1]);
     }
     else if (choix == 4)
     {
@@ -83,12 +84,12 @@ void choisirPreference(Utilisateur *user)
         printf("1 - Horreur\n2 - Comédie\n3 - Science-fiction\n4 - Documentaire\n5 - Autre\n");
         int filmsChoix = saisirChoix(1, 5);
         const char *genresFilms[] = {"Films et séries - Horreur", "Films et séries - Comédie", "Films et séries - Science-fiction", "Films et séries - Documentaire", "Films et séries - Autre"};
-        strcpy(user->preference, genresFilms[filmsChoix - 1]);
+        strcpy(utilisateur->preference, genresFilms[filmsChoix - 1]);
     }
     else
     {
         const char *categories[] = {"Musique", "Jeux vidéo", "Lecture", "Films et séries", "Sport", "Technologie", "Autre"};
-        strcpy(user->preference, categories[choix - 1]);
+        strcpy(utilisateur->preference, categories[choix - 1]);
     }
 }
 
@@ -110,115 +111,191 @@ void suggereUsername(char *username)
 
 int verifierUsernameExiste(const char *username)
 {
-    FILE *file = fopen("utilisateurs.txt", "r");
-    if (file == NULL)
-        return 0;
-    Utilisateur user;
-    while (fscanf(file, "%d %s %s %s %d %s %s %d %s\n",
-                  &user.id, user.username, user.nom, user.prenom, &user.age,
-                  user.motDePasse, user.preference, &user.twoFactorEnabled, user.email) != EOF)
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc, exists = 0;
+
+    // Ouvrir la base de données SQLite (ou la créer si elle n'existe pas)
+    rc = sqlite3_open("utilisateurs.db", &db);
+    if (rc != SQLITE_OK)
     {
-        if (strcmp(user.username, username) == 0)
-        {
-            fclose(file);
-            return 1;
-        }
+        printf("Erreur lors de l'ouverture de la base de données SQLite: %s\n", sqlite3_errmsg(db));
+        return 0;
     }
-    fclose(file);
-    return 0;
+
+    // Préparer la requête SQL pour vérifier l'existence d'un nom d'utilisateur
+    const char *sql = "SELECT 1 FROM utilisateurs WHERE username = ? LIMIT 1;";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        printf("Erreur lors de la préparation de la requête: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 0;
+    }
+
+    // Lier le paramètre (le nom d'utilisateur)
+    sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+
+    // Exécuter la requête et vérifier si on obtient un résultat
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        exists = 1;
+    }
+
+    // Libérer les ressources et fermer la DB
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+    return exists;
 }
 
 int genererNouvelID()
 {
-    FILE *file = fopen("utilisateurs.txt", "r");
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc;
     int lastId = 0;
-    if (file != NULL)
+
+    // Ouvrir la base de données SQLite
+    rc = sqlite3_open("utilisateurs.db", &db);
+    if (rc != SQLITE_OK)
     {
-        Utilisateur user;
-        while (fscanf(file, "%d %s %s %s %d %s %s %d %s\n",
-                      &user.id, user.username, user.nom, user.prenom, &user.age,
-                      user.motDePasse, user.preference, &user.twoFactorEnabled, user.email) != EOF)
-        {
-            lastId = user.id;
-        }
-        fclose(file);
+        printf("Erreur lors de l'ouverture de la base de données SQLite: %s\n", sqlite3_errmsg(db));
+        return -1;
     }
+
+    // Préparer la requête SQL pour trouver le plus grand id dans la table
+    const char *sql = "SELECT MAX(id) FROM utilisateurs;";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        printf("Erreur lors de la préparation de la requête: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -1;
+    }
+
+    // Exécuter la requête
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        // Si aucune ligne n'existe, SQLite renvoie NULL, donc lastId reste à 0
+        if (sqlite3_column_type(stmt, 0) != SQLITE_NULL)
+        {
+            lastId = sqlite3_column_int(stmt, 0);
+        }
+    }
+    else
+    {
+        printf("Erreur lors de la lecture du résultat.\n");
+    }
+
+    // Libérer les ressources et fermer la base de données
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
     return lastId + 1;
 }
 
 int creerUtilisateur()
 {
-    Utilisateur user;
+    Utilisateur utilisateur;
     char tempPassword[MAX_PASSWORD], confirmPassword[MAX_PASSWORD];
+
+    // Initialize utilisateur structure
+    memset(&utilisateur, 0, sizeof(Utilisateur));
+
     printf("=== Création de compte ===\n");
 
+    // Clear input buffer
+    while (getchar() != '\n')
+        ;
     // Génération d'un nouvel ID
-    user.id = genererNouvelID();
+    utilisateur.id = genererNouvelID();
+    if (utilisateur.id == -1)
+        return -1;
 
     // Saisie du nom d'utilisateur
     do
     {
         printf("Entrez un nom d'utilisateur : ");
-        scanf("%s", user.username);
-        if (verifierUsernameExiste(user.username))
+        scanf("%s", utilisateur.username);
+        if (verifierUsernameExiste(utilisateur.username))
         {
-            printf("Nom d'utilisateur déjà pris.\n");
-            suggereUsername(user.username);
+            char suggested[MAX_USERNAME];
+            strcpy(suggested, utilisateur.username);
+            suggereUsername(suggested);
+            printf("Voulez-vous utiliser '%s'? (1: Oui / 2: Non) : ", suggested);
+            int choix = saisirChoix(1, 2);
+            if (choix == 1)
+            {
+                strcpy(utilisateur.username, suggested);
+            }
+            else
+            {
+                continue;
+            }
         }
-    } while (verifierUsernameExiste(user.username));
+    } while (verifierUsernameExiste(utilisateur.username));
 
-    // Validation de l'âge (>= 13 ans)
     do
     {
         printf("Entrez votre âge : ");
-        scanf("%d", &user.age);
-        if (user.age < 13)
+        scanf("%d", &utilisateur.age);
+        if (utilisateur.age < 6)
         {
-            printf("Vous devez avoir au moins 13 ans pour créer un compte.\n");
+            printf("Vous devez avoir au moins 6 ans pour créer un compte.\n");
         }
-    } while (user.age < 13);
+    } while (utilisateur.age < 6);
 
     // Saisie du mot de passe
-    printf("Entrez votre mot de passe\n(must avoir au moins 8 caractères, 1 majuscule, 1 chiffre et 1 caractère spécial) : ");
-    fgets(tempPassword, MAX_PASSWORD, stdin);
+    printf("Entrez votre mot de passe\n(Doit avoir au moins 8 caractères, 1 majuscule, 1 chiffre et 1 caractère spécial) : ");
+    if (fgets(tempPassword, MAX_PASSWORD, stdin) != NULL)
+    {
+        tempPassword[strcspn(tempPassword, "\n")] = 0;
+    }
+
     if (!verifierForceMotDePasse(tempPassword))
     {
         printf("Mot de passe trop faible.\n");
         return -1;
     }
 
-    // Confirmation du mot de passe
     printf("Confirmez votre mot de passe : ");
-    fgets(confirmPassword, MAX_PASSWORD, stdin);
+    if (fgets(confirmPassword, MAX_PASSWORD, stdin) != NULL)
+    {
+        confirmPassword[strcspn(confirmPassword, "\n")] = 0;
+    }
+
     if (strcmp(tempPassword, confirmPassword) != 0)
     {
         printf("Les mots de passe ne correspondent pas.\n");
         return -1;
     }
 
-    choisirPreference(&user);
+    strncpy(utilisateur.motDePasse, tempPassword, MAX_PASSWORD - 1);
+    utilisateur.motDePasse[MAX_PASSWORD - 1] = '\0';
+    chiffrerMotDePasse(utilisateur.motDePasse);
 
-    strcpy(user.motDePasse, tempPassword);
-    chiffrerMotDePasse(user.motDePasse);
+    choisirPreference(&utilisateur);
 
-    // Enregistrement dans le fichier
-    return enregistrerUtilisateur(&user);
+    return sauvegarderUtilisateurSQL(&utilisateur);
 }
 
 void chiffrerMotDePasse(char *motDePasse)
 {
     size_t len = strlen(motDePasse);
-    for (size_t i = 0; i < len && i < MAX_PASSWORD - 5; i++)
+    size_t max_shift = MAX_PASSWORD - 5;
+    for (size_t i = 0; i < len && i < max_shift; i++)
     {
         motDePasse[i] = motDePasse[i] + 1;
     }
-    strncat(motDePasse, "HASH", MAX_PASSWORD - len - 1);
+    motDePasse[max_shift] = '\0';
+    strcat(motDePasse, "HASH");
 }
-
 int verifierForceMotDePasse(const char *motDePasse)
 {
-    if (!motDePasse) return 0;
-    
+    if (!motDePasse)
+        return 0;
+
     size_t len = strlen(motDePasse);
     if (len < 8)
         return 0;
@@ -233,21 +310,6 @@ int verifierForceMotDePasse(const char *motDePasse)
             special = 1;
     }
     return maj && chiffre && special;
-}
-
-int enregistrerUtilisateur(const Utilisateur *user)
-{
-    FILE *file = fopen("utilisateurs.txt", "a");
-    if (file == NULL)
-    {
-        printf("Erreur lors de l'ouverture du fichier utilisateurs.txt\n");
-        return -1;
-    }
-    fprintf(file, "%d %s %s %s %d %s %s %d %s\n", user->id, user->username,
-            user->nom, user->prenom, user->age, user->motDePasse,
-            user->preference, user->twoFactorEnabled, user->email);
-    fclose(file);
-    return 1;
 }
 
 int authentifierUtilisateur(const char *username, const char *motDePasse)
@@ -265,12 +327,146 @@ int supprimerUtilisateur(int id)
     return 0;
 }
 
-int sauvegarderUtilisateurSQL(Utilisateur utilisateur)
+int sauvegarderUtilisateurSQL(Utilisateur *utilisateur)
 {
-    return 0;
+    if (!utilisateur)
+        return -1;
+
+    sqlite3 *db;
+    char *errMsg = NULL;
+    int rc;
+
+    // Ouvrir la base de données SQLite (ou la créer si elle n'existe pas)
+    rc = sqlite3_open("utilisateurs.db", &db);
+    if (rc)
+    {
+        printf("Erreur lors de l'ouverture de la base de données SQLite : %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+
+    // Créer la table "utilisateurs" si elle n'existe pas
+    const char *createTableSQL =
+        "CREATE TABLE IF NOT EXISTS utilisateurs ("
+        "id INTEGER PRIMARY KEY, "
+        "username TEXT NOT NULL, "
+        "nom TEXT, "
+        "prenom TEXT, "
+        "age INTEGER, "
+        "motDePasse TEXT, "
+        "preference TEXT, "
+        "twoFactorEnabled INTEGER, "
+        "email TEXT NOT NULL);";
+
+    rc = sqlite3_exec(db, createTableSQL, 0, 0, &errMsg);
+    if (rc != SQLITE_OK)
+    {
+        printf("Erreur lors de la création de la table : %s\n", errMsg);
+        sqlite3_free(errMsg);
+        sqlite3_close(db);
+        return -1;
+    }
+
+    // Préparer la requête pour insérer un utilisateur
+    const char *insertSQL =
+        "INSERT INTO utilisateurs (id, username, nom, prenom, age, motDePasse, preference, twoFactorEnabled, email) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+
+    sqlite3_stmt *stmt;
+    rc = sqlite3_prepare_v2(db, insertSQL, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        printf("Erreur lors de la préparation de la requête : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -1;
+    }
+
+    // Lier les valeurs des utilisateurs aux paramètres de la requête
+    sqlite3_bind_int(stmt, 1, utilisateur->id);
+    sqlite3_bind_text(stmt, 2, utilisateur->username, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, utilisateur->nom, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, utilisateur->prenom, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 5, utilisateur->age);
+    sqlite3_bind_text(stmt, 6, utilisateur->motDePasse, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 7, utilisateur->preference, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 8, utilisateur->twoFactorEnabled);
+    sqlite3_bind_text(stmt, 9, utilisateur->email, -1, SQLITE_STATIC);
+
+    // Exécuter la requête d'insertion
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        printf("Erreur lors de l'insertion des données : %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        return -1;
+    }
+
+    // Libérer les ressources et fermer la base de données
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+    printf("Utilisateur enregistré avec succès dans la base de données SQLite.\n");
+    return 1;
 }
 
-int chargerUtilisateursSQL()
+int chargerUtilisateursSQL(Utilisateur utilisateurs[], size_t maxUtilisateurs)
 {
-    return 0;
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc;
+    size_t count = 0; // Nombre d'utilisateurs chargés
+
+    // Ouvrir la base de données SQLite
+    rc = sqlite3_open("utilisateurs.db", &db);
+    if (rc)
+    {
+        printf("Erreur lors de l'ouverture de la base de données SQLite : %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+
+    // Préparer la requête pour récupérer tous les utilisateurs
+    const char *selectSQL = "SELECT id, username, nom, prenom, age, motDePasse, preference, twoFactorEnabled, email FROM utilisateurs;";
+    rc = sqlite3_prepare_v2(db, selectSQL, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        printf("Erreur lors de la préparation de la requête : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return -1;
+    }
+
+    // Parcourir les résultats
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        if (count >= maxUtilisateurs)
+        {
+            printf("Limite d'utilisateurs atteinte (%zu).\n", maxUtilisateurs);
+            break;
+        }
+
+        // Charger les valeurs dans la structure Utilisateur
+        utilisateurs[count].id = sqlite3_column_int(stmt, 0);
+        strncpy(utilisateurs[count].username, (const char *)sqlite3_column_text(stmt, 1), MAX_USERNAME - 1);
+        utilisateurs[count].username[MAX_USERNAME - 1] = '\0';
+        strncpy(utilisateurs[count].nom, (const char *)sqlite3_column_text(stmt, 2), MAX_NAME - 1);
+        utilisateurs[count].nom[MAX_NAME - 1] = '\0';
+        strncpy(utilisateurs[count].prenom, (const char *)sqlite3_column_text(stmt, 3), MAX_NAME - 1);
+        utilisateurs[count].prenom[MAX_NAME - 1] = '\0';
+        utilisateurs[count].age = sqlite3_column_int(stmt, 4);
+        strncpy(utilisateurs[count].motDePasse, (const char *)sqlite3_column_text(stmt, 5), MAX_PASSWORD - 1);
+        utilisateurs[count].motDePasse[MAX_PASSWORD - 1] = '\0';
+        strncpy(utilisateurs[count].preference, (const char *)sqlite3_column_text(stmt, 6), MAX_PREFERENCE - 1);
+        utilisateurs[count].preference[MAX_PREFERENCE - 1] = '\0';
+        utilisateurs[count].twoFactorEnabled = sqlite3_column_int(stmt, 7);
+        strncpy(utilisateurs[count].email, (const char *)sqlite3_column_text(stmt, 8), MAX_EMAIL - 1);
+        utilisateurs[count].email[MAX_EMAIL - 1] = '\0';
+
+        count++; // Incrémenter le compteur
+    }
+
+    // Libérer les ressources
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+    printf("Nombre d'utilisateurs chargés : %zu\n", count);
+    return count; // Retourner le nombre d'utilisateurs chargés
 }
