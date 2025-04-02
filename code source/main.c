@@ -1,14 +1,14 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include "../include/media.h"
 #include "../include/gui.h"
 #include "../include/recommendation.h"
 #include "../include/user.h"
 
-int main()
-{
-    printf("Hello world");
-    return 0;
+int main() {
+    printf("Hello world\n");
+    system("py \"C:\\Users\\HP\\Desktop\\Prog\\RM\\code source\\fenetre.py\"");
+      return 0;
 }

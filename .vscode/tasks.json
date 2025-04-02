@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build C SDL3 Project",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-I",
+                "C:/Users/HP/Desktop/Prog/RM/include",
+                "-L",
+                "C:/Users/HP/Downloads/Compressed/SDL3-devel-3.2.8-VC/SDL3-3.2.8/lib/x64",
+                "-o",
+                "C:/Users/HP/Desktop/Prog/RM/code source/main.c",
+                "C:/Users/HP/Desktop/Prog/RM/code source/media.c",
+                "C:/Users/HP/Desktop/Prog/RM/code source/recommendation.c",
+                "C:/Users/HP/Desktop/Prog/RM/code source/sqlite3.c",
+                "C:/Users/HP/Desktop/Prog/RM/code source/user.c",
+                "C:/Users/HP/Desktop/Prog/RM/code source/utils.c",
+                "-lSDL3",
+            ],
+
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}
