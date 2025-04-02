@@ -1,8 +1,8 @@
 #ifndef USER_H
 #define USER_H
 
-#include <stdio.h>  
-#include <string.h> 
+#include <stdio.h>
+#include <string.h>
 
 // Définition des constantes
 #define MAX_USERNAME 50
@@ -15,9 +15,9 @@
 #define MAX_CONFIRM_CODE 10
 #define MAX_ATTEMPTS 3
 
-
 // Structure représentant un utilisateur
-typedef struct {
+typedef struct
+{
     int id;                          // Identifiant unique
     char username[MAX_USERNAME];     // Nom d'utilisateur
     char nom[MAX_NAME];              // Nom
@@ -29,7 +29,6 @@ typedef struct {
     char email[MAX_EMAIL];           // Adresse e-mail
     char referralCode[20];           // Code de parrainage
 } Utilisateur;
-
 
 /**
  * Demande à l'utilisateur de choisir sa préférence principale et,
@@ -93,13 +92,6 @@ int creerUtilisateur();
 void chiffrerMotDePasse(char *motDePasse);
 
 /**
- * Vérifie si un mot de passe respecte les critères de sécurité.
- * @param motDePasse Le mot de passe à vérifier
- * @return 1 si le mot de passe est valide, 0 sinon
- */
-int verifierMotDePasse(const char *motDePasse);
-
-/**
  * Authentifie un utilisateur en vérifiant son identifiant et son mot de passe.
  * @param username Nom d'utilisateur
  * @param motDePasse Mot de passe
@@ -134,4 +126,4 @@ int sauvegarderUtilisateurSQL(Utilisateur *utilisateur);
  */
 int chargerUtilisateursSQL();
 
-#endif // USER_H
+#endif

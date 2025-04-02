@@ -291,6 +291,7 @@ void chiffrerMotDePasse(char *motDePasse)
     motDePasse[max_shift] = '\0';
     strcat(motDePasse, "HASH");
 }
+
 int verifierForceMotDePasse(const char *motDePasse)
 {
     if (!motDePasse)
