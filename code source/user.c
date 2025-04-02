@@ -314,16 +314,117 @@ int verifierForceMotDePasse(const char *motDePasse)
 
 int authentifierUtilisateur(const char *username, const char *motDePasse)
 {
-    return 0;
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("database.db", &db);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Erreur lors de l'ouverture de la base de données : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 0;
+    }
+
+    const char *sql = "SELECT motDePasse FROM utilisateurs WHERE username = ?";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Erreur lors de la préparation de la requête : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 0;
+    }
+    sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+    int auth = 0;
+    if (rc == SQLITE_ROW)
+    {
+        const unsigned char *motDePasseBDD = sqlite3_column_text(stmt, 0);
+        if (strcmp((const char *)motDePasseBDD, motDePasse) == 0)
+            auth = 1;
+    }
+    else
+    {
+        fprintf(stderr, "Utilisateur '%s' non trouvé.\n", username);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return auth;
 }
 
 int recupererMotDePasse(const char *username)
 {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("database.db", &db);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Erreur lors de l'ouverture de la base de données : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 1;
+    }
+
+    const char *sql = "SELECT motDePasse FROM utilisateurs WHERE username = ?";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Erreur lors de la préparation de la requête : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 1;
+    }
+
+    sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        const unsigned char *motDePasseBDD = sqlite3_column_text(stmt, 0);
+        printf("Mot de passe pour l'utilisateur '%s' : %s\n", username, motDePasseBDD);
+    }
+    else
+    {
+        printf("Utilisateur '%s' non trouvé.\n", username);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
     return 0;
 }
 
 int supprimerUtilisateur(int id)
 {
+    sqlite3 *db;
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_open("database.db", &db);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Erreur lors de l'ouverture de la base de données : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 1;
+    }
+
+    const char *sql = "DELETE FROM utilisateurs WHERE id = ?";
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Erreur lors de la préparation de la requête : %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 1;
+    }
+
+    sqlite3_bind_int(stmt, 1, id);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "Erreur lors de la suppression de l'utilisateur : %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
     return 0;
 }
 
