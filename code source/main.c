@@ -8,7 +8,7 @@
 #include "../include/user.h"
 
 int main() {
-    printf("Hello world\n");
     system("py \"C:\\Users\\HP\\Desktop\\Prog\\RM\\code source\\fenetre.py\"");
+    printf("Hello world\n");
       return 0;
 }
