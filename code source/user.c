@@ -25,6 +25,15 @@ char getch()
 }
 #endif
 
+/* ------------------------------------------------------------------------
+Fonction : saisirChoix
+Description : Permet de saisir un choix entre une valeur minimale et maximale.
+Paramètres :
+  - int min : valeur minimale autorisée
+  - int max : valeur maximale autorisée
+Retour : int, le choix validé par l’utilisateur.
+---------------------------------------------------------------------------*/
+
 int saisirChoix(int min, int max)
 {
     int choix;
@@ -56,6 +65,12 @@ int saisirChoix(int min, int max)
     }
 }
 
+/* ------------------------------------------------------------------------
+Fonction : choisirPreference
+Description : Permet de définir ou modifier la préférence d'un utilisateur.
+Paramètre :
+  - Utilisateur *utilisateur : pointeur vers la structure de l'utilisateur.
+-------------------------------------------------------------------------- */
 void choisirPreference(Utilisateur *utilisateur)
 {
     printf("Sélectionnez votre préférence principale :\n");
@@ -93,6 +108,12 @@ void choisirPreference(Utilisateur *utilisateur)
     }
 }
 
+/* ------------------------------------------------------------------------
+Fonction : suggererUsername
+Description : Suggère automatiquement un nom d'utilisateur basé sur certains critères.
+Paramètre :
+  - char *username : chaîne à compléter avec la suggestion.
+------------------------------------------------------------------------- */
 void suggereUsername(char *username)
 {
     int suffixe = 1;
@@ -109,6 +130,13 @@ void suggereUsername(char *username)
     }
 }
 
+/* ------------------------------------------------------------------------
+Fonction : verifierUsernameExiste
+Description : Vérifie si un nom d'utilisateur existe déjà.
+Paramètre :
+  - const char *username : le nom d'utilisateur à vérifier.
+Retour : int, 1 si l'utilisateur existe, 0 sinon.
+-------------------------------------------------------------------------- */
 int verifierUsernameExiste(const char *username)
 {
     sqlite3 *db;
@@ -149,6 +177,11 @@ int verifierUsernameExiste(const char *username)
     return exists;
 }
 
+/* ------------------------------------------------------------------------
+Fonction : genererNouvelID
+Description : Génère un identifiant unique pour un nouvel utilisateur.
+Retour : int, le nouvel identifiant généré.
+-------------------------------------------------------------------------- */
 int genererNouvelID()
 {
     sqlite3 *db;
@@ -194,6 +227,12 @@ int genererNouvelID()
 
     return lastId + 1;
 }
+
+/* --------------------------------------------------------------
+Fonction : creerUtilisateur
+Description : Crée un nouvel utilisateur à partir des informations saisies.
+Retour : int, 1 si l'utilisateur est créé, 0 sinon.
+-------------------------------------------------------------- */
 
 int creerUtilisateur()
 {
@@ -280,6 +319,12 @@ int creerUtilisateur()
     return sauvegarderUtilisateurSQL(&utilisateur);
 }
 
+/* --------------------------------------------------------------
+Fonction : chiffrerMotDePasse
+Description : Chiffre un mot de passe pour un stockage sécurisé.
+Paramètre :
+  - char *motDePasse : le mot de passe à chiffrer (modifié directement).
+-------------------------------------------------------------- */
 void chiffrerMotDePasse(char *motDePasse)
 {
     size_t len = strlen(motDePasse);
@@ -292,6 +337,13 @@ void chiffrerMotDePasse(char *motDePasse)
     strcat(motDePasse, "HASH");
 }
 
+/* --------------------------------------------------------------
+Fonction : verifierForceMotDePasse
+Description : Vérifie la robustesse d'un mot de passe.
+Paramètre :
+  - const char *motDePasse : le mot de passe à vérifier.
+Retour : int, 1 si le mot de passe est suffisamment fort, 0 sinon.
+-------------------------------------------------------------- */
 int verifierForceMotDePasse(const char *motDePasse)
 {
     if (!motDePasse)
@@ -313,6 +365,14 @@ int verifierForceMotDePasse(const char *motDePasse)
     return maj && chiffre && special;
 }
 
+/* --------------------------------------------------------------
+Fonction : authentifierUtilisateur
+Description : Authentifie un utilisateur en comparant le mot de passe fourni avec celui stocké.
+Paramètres :
+  - const char *username : le nom d'utilisateur.
+  - const char *motDePasse : le mot de passe saisi par l'utilisateur.
+Retour : int, 1 si l'authentification réussit, 0 sinon.
+-------------------------------------------------------------- */
 int authentifierUtilisateur(const char *username, const char *motDePasse)
 {
     sqlite3 *db;
@@ -353,6 +413,13 @@ int authentifierUtilisateur(const char *username, const char *motDePasse)
     return auth;
 }
 
+/* --------------------------------------------------------------
+Fonction : recupererMotDePasse
+Description : Récupère et affiche le mot de passe d'un utilisateur (à utiliser avec prudence).
+Paramètre :
+  - const char *username : le nom d'utilisateur dont le mot de passe est demandé.
+Retour : int, 1 si l'opération réussit, 0 sinon.
+-------------------------------------------------------------- */
 int recupererMotDePasse(const char *username)
 {
     sqlite3 *db;
@@ -392,6 +459,13 @@ int recupererMotDePasse(const char *username)
     return 0;
 }
 
+/* --------------------------------------------------------------
+Fonction : supprimerUtilisateur
+Description : Supprime un utilisateur à l'aide de son identifiant.
+Paramètre :
+  - int id : l'identifiant de l'utilisateur à supprimer.
+Retour : int, 1 si la suppression est effectuée, 0 sinon.
+-------------------------------------------------------------- */
 int supprimerUtilisateur(int id)
 {
     sqlite3 *db;
@@ -429,6 +503,13 @@ int supprimerUtilisateur(int id)
     return 0;
 }
 
+/* --------------------------------------------------------------
+Fonction : sauvegarderUtilisateurSQL
+Description : Sauvegarde les informations d'un utilisateur dans une base de données SQL.
+Paramètre :
+  - Utilisateur *utilisateur : pointeur vers la structure de l'utilisateur à sauvegarder.
+Retour : int, 1 si la sauvegarde réussit, 0 sinon.
+-------------------------------------------------------------- */
 int sauvegarderUtilisateurSQL(Utilisateur *utilisateur)
 {
     if (!utilisateur)
@@ -511,6 +592,14 @@ int sauvegarderUtilisateurSQL(Utilisateur *utilisateur)
     return 1;
 }
 
+/* --------------------------------------------------------------
+Fonction : chargerUtilisateursSQL
+Description : Charge les utilisateurs depuis une base de données SQL dans un tableau.
+Paramètres :
+  - Utilisateur utilisateurs[] : tableau où seront stockés les utilisateurs chargés.
+  - size_t maxUtilisateurs : nombre maximal d'utilisateurs à charger.
+Retour : int, le nombre d'utilisateurs chargés, ou -1 en cas d'erreur.
+-------------------------------------------------------------- */
 int chargerUtilisateursSQL(Utilisateur utilisateurs[], size_t maxUtilisateurs)
 {
     sqlite3 *db;

@@ -124,6 +124,6 @@ int sauvegarderUtilisateurSQL(Utilisateur *utilisateur);
  * Charge tous les utilisateurs depuis une base de données SQLite.
  * @return Le nombre d'utilisateurs chargés ou -1 en cas d'erreur
  */
-int chargerUtilisateursSQL();
+int chargerUtilisateursSQL(Utilisateur utilisateurs[], size_t maxUtilisateurs);
 
 #endif
